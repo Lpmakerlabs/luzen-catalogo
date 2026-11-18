@@ -3,6 +3,9 @@
  * Lógica interactiva para filtros, búsqueda, carrito, visualización y WhatsApp.
  */
 
+// Número oficial de WhatsApp de LUZEN (+54 9 2974 30-5906)
+const WHATSAPP_PHONE = '5492974305906';
+
 // Array de camisetas oficiales exhibidas en LUZEN
 const PRODUCTS = [
   {
@@ -173,11 +176,6 @@ function setCategory(categoryId) {
   activeCategory = categoryId;
   renderCategoryPills();
   renderCatalog();
-  
-  const currentCategoryObj = CATEGORIES.find(c => c.id === categoryId);
-  if (currentCategoryObj && currentCategoryObj.id !== 'todos') {
-    showToast(`Categoría: ${currentCategoryObj.name}`);
-  }
 }
 
 // Renderizado del Catálogo (Filas de a 2 en celular, 4 en desktop)
@@ -337,7 +335,39 @@ function setupEventListeners() {
   }
 }
 
-// Carrito
+// Carrito (confirmación visual inline en el botón y contador sin spam de toasts)
+const CHECK_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 sm:w-4 sm:h-4"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+function triggerAddButtonFeedback(btn) {
+  if (!btn || !btn.classList) return;
+  if (!btn.dataset.originalHtml) {
+    btn.dataset.originalHtml = btn.innerHTML;
+  }
+  if (btn._feedbackTimer) {
+    clearTimeout(btn._feedbackTimer);
+  }
+
+  btn.innerHTML = CHECK_ICON_SVG;
+  btn.classList.remove('bg-[#0A0A0C]', 'hover:bg-zinc-800');
+  btn.classList.add('bg-emerald-600', 'hover:bg-emerald-600', 'scale-105');
+
+  btn._feedbackTimer = setTimeout(() => {
+    if (btn.dataset.originalHtml) {
+      btn.innerHTML = btn.dataset.originalHtml;
+    }
+    btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-600', 'scale-105');
+    btn.classList.add('bg-[#0A0A0C]', 'hover:bg-zinc-800');
+    btn._feedbackTimer = null;
+  }, 850);
+}
+
+function pulseCartBadge() {
+  if (!cartBadge) return;
+  cartBadge.classList.remove('badge-pop');
+  void cartBadge.offsetWidth;
+  cartBadge.classList.add('badge-pop');
+}
+
 function addToCart(productId, event) {
   if (event) event.stopPropagation();
 
@@ -360,7 +390,8 @@ function addToCart(productId, event) {
 
   saveCart();
   updateCartUI();
-  showToast(`¡${product.title} agregada al pedido!`, 'cart');
+  pulseCartBadge();
+  triggerAddButtonFeedback(event && event.currentTarget);
 }
 
 function updateCartQuantity(index, delta) {
@@ -375,10 +406,9 @@ function updateCartQuantity(index, delta) {
 
 function removeFromCart(index) {
   if (!cart[index]) return;
-  const removed = cart.splice(index, 1)[0];
+  cart.splice(index, 1);
   saveCart();
   updateCartUI();
-  showToast(`Removiste ${removed.title} del pedido`);
 }
 
 function saveCart() {
@@ -516,8 +546,7 @@ function consultItemWhatsApp(productId) {
   if (!product) return;
 
   const text = `¡Hola LUZEN! ⚽ Quisiera consultar disponibilidad sobre la camiseta *${product.title}* (${product.year}, Temporada ${product.season}).`;
-  const phone = '5491112345678';
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  const url = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
   window.open(url, '_blank');
 }
 
@@ -536,8 +565,7 @@ function checkoutWhatsApp() {
 
   text += `\n¿Cómo coordinamos el pago y el envío? Muchas gracias.`;
 
-  const phone = '5491112345678';
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  const url = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
   window.open(url, '_blank');
 }
 
@@ -545,45 +573,48 @@ function checkoutWhatsApp() {
 function toggleFavorite(productId, event) {
   if (event) event.stopPropagation();
 
-  const isFav = favorites.has(productId);
-  if (isFav) {
+  if (favorites.has(productId)) {
     favorites.delete(productId);
-    showToast('Removido de favoritos');
   } else {
     favorites.add(productId);
-    showToast('¡Guardado en tus favoritos! ❤️');
   }
 
   localStorage.setItem('luzen_favorites', JSON.stringify(Array.from(favorites)));
   renderCatalog();
 }
 
-// Notificaciones flotantes (Toast)
+// Notificación flotante controlada (instancia única, sin apilamiento ni spam)
+let activeToastTimeout = null;
+let activeToastRemoveTimeout = null;
+
 function showToast(message, type = 'info') {
   if (!toastContainer) return;
+
+  if (activeToastTimeout) clearTimeout(activeToastTimeout);
+  if (activeToastRemoveTimeout) clearTimeout(activeToastRemoveTimeout);
+  toastContainer.innerHTML = '';
 
   const toast = document.createElement('div');
   toast.className = 'toast-animate bg-zinc-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs md:text-sm font-medium border border-zinc-800';
 
-  let iconHtml = '<i data-lucide="info" class="w-4 h-4 text-zinc-400"></i>';
-  if (type === 'cart') {
-    iconHtml = '<i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-400"></i>';
-  } else if (type === 'alert') {
-    iconHtml = '<i data-lucide="alert-circle" class="w-4 h-4 text-amber-400"></i>';
-  }
+  const iconByType = {
+    cart: '<i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-400"></i>',
+    alert: '<i data-lucide="alert-circle" class="w-4 h-4 text-amber-400"></i>',
+    info: '<i data-lucide="info" class="w-4 h-4 text-zinc-400"></i>'
+  };
 
   toast.innerHTML = `
-    ${iconHtml}
+    ${iconByType[type] || iconByType.info}
     <span>${message}</span>
   `;
 
   toastContainer.appendChild(toast);
   if (window.lucide) lucide.createIcons();
 
-  setTimeout(() => {
+  activeToastTimeout = setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(10px) scale(0.95)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, 2500);
+    toast.style.transition = 'all 0.25s ease';
+    activeToastRemoveTimeout = setTimeout(() => toast.remove(), 250);
+  }, 1800);
 }
