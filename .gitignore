@@ -8,3 +8,7 @@ Thumbs.db
 # Temp test files
 *.tmp
 temp/
+
+# Cloudflare CLI build output & staging
+.cloudflare/
+dist/

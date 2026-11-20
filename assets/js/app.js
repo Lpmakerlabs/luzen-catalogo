@@ -45,6 +45,42 @@ const PRODUCTS = [
     inStock: true
   },
   {
+    id: 'boca-retro-manga-larga-03-04',
+    title: 'Boca Retro Manga Larga',
+    year: '2003 - 2004',
+    season: '03-04',
+    team: 'Boca Juniors',
+    category: ['retro', 'clubes-argentinos'],
+    image: 'assets/images/jerseys/boca-retro-manga-larga-03-04.webp',
+    searchKeywords: 'boca juniors cabj retro titular manga larga pepsi total 90 nike 2003 2004 03-04 tevez libertadores intercontinental',
+    description: 'Histórica camiseta titular retro manga larga de Boca Juniors Total 90 con sponsor Pepsi, época dorada internacional.',
+    inStock: true
+  },
+  {
+    id: 'boca-retro-manga-corta-03-04',
+    title: 'Boca Retro Manga Corta',
+    year: '2003 - 2004',
+    season: '03-04',
+    team: 'Boca Juniors',
+    category: ['retro', 'clubes-argentinos'],
+    image: 'assets/images/jerseys/boca-retro-manga-corta-03-04.webp',
+    searchKeywords: 'boca juniors cabj retro titular manga corta pepsi total 90 nike 2003 2004 03-04 tevez libertadores intercontinental',
+    description: 'Camiseta titular retro de Boca Juniors diseño Total 90 con el legendario sponsor Pepsi en la franja dorada.',
+    inStock: true
+  },
+  {
+    id: 'juventus-manga-larga-15-16',
+    title: 'Juventus Suplente Manga Larga',
+    year: '2015 - 2016',
+    season: '15-16',
+    team: 'Juventus',
+    category: ['retro', 'clubes-europeos'],
+    image: 'assets/images/jerseys/juventus-manga-larga-15-16.webp',
+    searchKeywords: 'juventus juve italia rosa pink manga larga jeep adidas climacool 2015 2016 15-16 pogba suplente',
+    description: 'Camiseta suplente manga larga rosa de la Juventus temporada 2015-2016, diseño de culto con sponsor Jeep.',
+    inStock: true
+  },
+  {
     id: 'milan-retro-manga-larga-06-07',
     title: 'Milan Retro Manga Larga',
     year: '2006 - 2007',
